@@ -1,13 +1,30 @@
 package com.example.practical.orderservice.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.example.practical.orderservice.client.ProductClient;
+import com.example.practical.orderservice.dto.OrderResponseDTO;
+import com.example.practical.orderservice.dto.ProductDTO;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/orders")
+@RequiredArgsConstructor
 public class OrderController {
 
-    @GetMapping("/orders")
-    public String getOrders() {
-        return "Order Service Running";
+    private final ProductClient productClient;
+
+    @GetMapping("/{id}")
+    public OrderResponseDTO getOrder(
+            @PathVariable Long id
+    ) {
+
+        ProductDTO product =
+                productClient.getProduct(id);
+
+        return new OrderResponseDTO(
+                product.id(),
+                product.name(),
+                product.price()
+        );
     }
 }

@@ -1,13 +1,19 @@
 package com.example.practical.inventoryservice.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.example.practical.inventoryservice.dto.InventoryDTO;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/inventory")
 public class InventoryController {
 
-    @GetMapping("/inventory")
-    public String getInventory() {
-        return "Inventory Service Running";
+    @GetMapping("/{productId}")
+    public InventoryDTO getInventory(
+            @PathVariable Long productId
+    ) {
+        return new InventoryDTO(
+                productId,
+                25
+        );
     }
 }
