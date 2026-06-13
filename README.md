@@ -1,36 +1,48 @@
 # Spring Boot Microservices Playground
 
-A hands-on learning project for building and understanding Microservices Architecture using Spring Boot.
+A hands-on learning project for building and understanding **Microservices Architecture** using **Spring Boot**, **Spring Cloud**, and modern distributed system patterns.
+
+---
 
 ## Overview
 
-This repository contains multiple independent microservices managed under a single parent Maven project. The goal of this project is to learn and implement modern microservice patterns and technologies used in enterprise applications.
+This repository contains multiple independent microservices managed under a single parent Maven project. The purpose of this project is to gain practical experience with enterprise-level microservice development and cloud-native architecture.
 
 Current services include:
 
 * Product Service
 * Inventory Service
 * Order Service
+* API Gateway
 
-Each service runs independently with its own database and configuration.
+The services communicate through REST APIs and are routed through a centralized API Gateway.
 
 ---
 
 ## Architecture
 
 ```text
-springboot-microservices-playground
-│
-├── product-service
-│   └── Port: 8081
-│
-├── inventory-service
-│   └── Port: 8082
-│
-├── order-service
-│   └── Port: 8083
-│
-└── Parent Maven Project
+                        +------------------+
+                        |    API Gateway   |
+                        |     Port 8085    |
+                        +--------+---------+
+                                 |
+          ---------------------------------------------
+          |                     |                     |
+          v                     v                     v
+
++----------------+   +----------------+   +----------------+
+| Product Service|   | Inventory      |   | Order Service  |
+| Port: 8081     |   | Service        |   | Port: 8083     |
+| products_db    |   | Port: 8082     |   | order_db       |
++----------------+   | inventory_db   |   +----------------+
+                     +----------------+
+
+Order Service
+      |
+      | OpenFeign Client
+      v
+Inventory Service
 ```
 
 ---
@@ -44,6 +56,8 @@ springboot-microservices-playground
 * Spring Web
 * Spring Data JPA
 * Hibernate
+* Spring Cloud OpenFeign
+* Spring Cloud Gateway
 
 ### Database
 
@@ -61,11 +75,11 @@ springboot-microservices-playground
 
 ---
 
-## Services
+## Microservices
 
 ### Product Service
 
-Responsible for managing product-related operations.
+Responsible for managing product information.
 
 **Port:** `8081`
 
@@ -97,6 +111,12 @@ Responsible for managing customer orders.
 
 **Port:** `8083`
 
+Features:
+
+* Create Orders
+* Validate Product Availability
+* Communicate with Inventory Service using OpenFeign
+
 Sample Endpoint:
 
 ```http
@@ -105,9 +125,78 @@ GET /api/orders
 
 ---
 
+### API Gateway
+
+Central entry point for all client requests.
+
+**Port:** `8085`
+
+Responsibilities:
+
+* Request Routing
+* Centralized Access Point
+* Load Balancing Ready
+* Future Authentication Integration
+* Future Rate Limiting Support
+
+Example Routes:
+
+```text
+/api/products/**   -> Product Service
+/api/inventory/** -> Inventory Service
+/api/orders/**    -> Order Service
+```
+
+Example Access:
+
+```http
+http://localhost:8085/api/products
+http://localhost:8085/api/inventory
+http://localhost:8085/api/orders
+```
+
+---
+
+## Service-to-Service Communication
+
+The project uses **Spring Cloud OpenFeign** for inter-service communication.
+
+### Example Flow
+
+```text
+Client
+   |
+   v
+Order Service
+   |
+   | OpenFeign
+   v
+Inventory Service
+```
+
+Benefits:
+
+* Simplified REST Client
+* Declarative HTTP Calls
+* Cleaner Code
+* Easy Microservice Integration
+
+Example Feign Client:
+
+```java
+@FeignClient(name = "inventory-service")
+public interface InventoryClient {
+
+    @GetMapping("/api/inventory/check/{productId}")
+    Boolean isInStock(@PathVariable Long productId);
+}
+```
+
+---
+
 ## Database Configuration
 
-Each microservice uses its own dedicated database.
+Each microservice maintains its own dedicated database.
 
 | Service           | Database     |
 | ----------------- | ------------ |
@@ -115,7 +204,7 @@ Each microservice uses its own dedicated database.
 | Inventory Service | inventory_db |
 | Order Service     | order_db     |
 
-Example:
+Example Configuration:
 
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/products_db
@@ -143,13 +232,38 @@ CREATE DATABASE order_db;
 
 ### Run Services
 
-Start each microservice independently:
+Start the services in the following order:
+
+1. Product Service (8081)
+2. Inventory Service (8082)
+3. Order Service (8083)
+4. API Gateway (8085)
 
 ```bash
 mvn spring-boot:run
 ```
 
-or run from IntelliJ IDEA.
+or run each service directly from IntelliJ IDEA.
+
+---
+
+## API Gateway Configuration
+
+Example Route Configuration:
+
+```properties
+spring.cloud.gateway.server.webflux.routes[0].id=product-service
+spring.cloud.gateway.server.webflux.routes[0].uri=http://localhost:8081
+spring.cloud.gateway.server.webflux.routes[0].predicates[0]=Path=/api/products/**
+
+spring.cloud.gateway.server.webflux.routes[1].id=inventory-service
+spring.cloud.gateway.server.webflux.routes[1].uri=http://localhost:8082
+spring.cloud.gateway.server.webflux.routes[1].predicates[0]=Path=/api/inventory/**
+
+spring.cloud.gateway.server.webflux.routes[2].id=order-service
+spring.cloud.gateway.server.webflux.routes[2].uri=http://localhost:8083
+spring.cloud.gateway.server.webflux.routes[2].predicates[0]=Path=/api/orders/**
+```
 
 ---
 
@@ -163,19 +277,21 @@ or run from IntelliJ IDEA.
 * Order Service
 * MySQL Integration
 * Basic REST APIs
+* OpenFeign Client
+* API Gateway
+* Inter-Service Communication
 
 ### Upcoming
 
-* Service-to-Service Communication
-* OpenFeign Client
 * Eureka Service Discovery
-* API Gateway
+* Config Server
 * Docker & Docker Compose
 * Apache Kafka
 * Distributed Tracing
-* Centralized Configuration
 * JWT Authentication
+* Resilience4j Circuit Breaker
 * Monitoring & Logging
+* Kubernetes Deployment
 
 ---
 
@@ -185,7 +301,8 @@ The primary objective of this repository is to gain practical experience in:
 
 * Microservices Architecture
 * Distributed Systems
-* Event-Driven Communication
+* Service Communication
+* Event-Driven Architecture
 * Cloud-Native Development
 * Enterprise Backend Engineering
 
@@ -197,7 +314,7 @@ The primary objective of this repository is to gain practical experience in:
 
 Full Stack Engineer
 
-Technologies:
+### Technologies
 
 * Java & Spring Boot
 * React & React Native
